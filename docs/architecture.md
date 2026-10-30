@@ -24,11 +24,15 @@ flowchart TB
         writer["writer — MQTT to DB"]
         db[("Time-series DB — InfluxDB / TimescaleDB")]
         rules["rules + attention engine — thresholds · savings · ML"]
-        dash["Dashboard — Metrics · Money · Attention"]
+        api["api — serves Attention list + data to the app"]
+        grafana["Grafana — Metrics · Money dashboards"]
         alerter["alert dispatcher — urgent / normal"]
     end
 
-    phone["Phone"]
+    subgraph clients["Clients — one Flutter codebase"]
+        app["Flutter app — iOS · Android · web/PWA<br/>Attention tab + embedded Grafana tab"]
+    end
+    push["Push: ntfy / Telegram"]
 
     scd -->|I2C| reader
     sps -->|I2C| reader
@@ -43,8 +47,12 @@ flowchart TB
     broker --> rules
     db --> rules
     rules --> db
-    db --> dash
-    rules --> alerter --> phone
+    db --> grafana
+    rules --> api
+    db --> api
+    grafana -->|embedded webview| app
+    api --> app
+    rules --> alerter --> push --> app
 ```
 
 ## Data flow, in words
@@ -58,9 +66,26 @@ flowchart TB
 3. **Decide.** The `rules + attention engine` reads live MQTT (fast alerts) and the DB
    (trends/savings), and writes derived results back — the Attention list, € savings,
    washing-done, mold risk, heating-failure, watering recommendation.
-4. **Show & notify.** The dashboard reads the DB and renders the three views
-   (Metrics / Money / Attention). The alert dispatcher sends urgent (safety) and
-   normal (everything else) notifications to the phone.
+4. **Show & notify.**
+   - **Grafana** renders the Metrics + Money dashboards straight from the DB.
+   - A small **`api`** serves the Attention list (and data) to the **Flutter app**, which
+     has one codebase for iOS, Android, and web/PWA: an **Attention tab** (custom UI) and a
+     **Dashboards tab** that embeds Grafana in a webview.
+   - The **alert dispatcher** pushes urgent (safety) and normal notifications via a push
+     service (**ntfy** or **Telegram**) to both phones — no app-store account needed.
+
+## Clients & distribution
+
+- **One Flutter codebase → iOS + Android + web.** Covers both phones (iOS + Android) and a
+  browser view from the same source.
+- **Dashboards tab** = Grafana embedded via webview (don't rebuild charts).
+  **Attention tab** = custom UI, the part worth building by hand.
+- **App stores are optional.** For a two-person household the simplest path is a
+  **PWA** (Flutter web, hosted on the Pi, "add to home screen") plus **ntfy/Telegram for
+  push** — their apps are already in both stores, so notifications work cross-platform
+  without an Apple Developer account. A native build/TestFlight is only worth it later if
+  you want native push and polish (Android sideloads freely; iOS needs the $99/yr Apple
+  Developer account for TestFlight or the store).
 
 ## Why this shape
 
@@ -97,15 +122,23 @@ home-observability/
 │   ├── weather-poller/      # API → MQTT
 │   ├── writer/              # MQTT → DB
 │   ├── rules-engine/        # alerts, attention, savings
-│   └── dashboard/           # the three views
+│   └── api/                 # serves Attention list + data to the app
+├── app/                     # Flutter app (iOS · Android · web)
 ├── infra/
-│   └── docker-compose.yml   # broker + DB + services
+│   ├── docker-compose.yml   # broker + DB + Grafana + services
+│   └── grafana/             # provisioned dashboards (Metrics · Money)
 ├── .env.example
 └── .gitignore
 ```
 
+## Decided
+
+- **Dashboards:** Grafana (Metrics + Money), provisioned as code, embedded in the app.
+- **App:** Flutter — one codebase for iOS + Android + web; Attention tab (custom) +
+  Dashboards tab (embedded Grafana). PWA first; app stores optional.
+- **Push:** ntfy or Telegram (final pick in the software phase) — no store account needed.
+
 ## Open choices (decide during the software phase, not now)
 
 - Time-series DB: **InfluxDB** vs **TimescaleDB (Postgres)**.
-- Dashboard: **Grafana** (fast, prebuilt) vs **custom app** (full control of the 3 views).
-- Phone channel: **ntfy** (self-hosted, simple) vs **Telegram bot** vs **Pushover**.
+- Push service: **ntfy** (self-hosted, simple) vs **Telegram bot**.
