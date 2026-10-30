@@ -125,7 +125,8 @@ section once this list is agreed.
 
 ### Platform — the three views
 **UC-P1 — History & trends**
-- [ ] Readings retained long enough to see weeks/months of trend (metric).
+- [ ] Readings retained for **2 years** (tiered: raw ~60–90 days, 1–5 min rollups ~1 year,
+      hourly/daily rollups 2 years) — enough for year-over-year seasonal comparison.
 
 **UC-P2 — One dashboard, three lenses**
 - [ ] **Metrics** view: current readings + trends across all modules.

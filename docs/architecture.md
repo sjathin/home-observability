@@ -1,8 +1,7 @@
 # Architecture
 
-> v1 design. Everything runs locally on the Raspberry Pi in Docker. GCP is optional
-> and only for later (aggregates / backup / heavier ML). Nothing here depends on a
-> cloud account to function.
+> v1 design. Everything runs locally on the Raspberry Pi in Docker. No cloud — the
+> platform is fully self-contained and keeps working without internet.
 
 ## System diagram
 
@@ -29,10 +28,6 @@ flowchart TB
         alerter["alert dispatcher — urgent / normal"]
     end
 
-    subgraph cloud["GCP — optional, later"]
-        agg["aggregates · backup · heavier ML"]
-    end
-
     phone["Phone"]
 
     scd -->|I2C| reader
@@ -50,7 +45,6 @@ flowchart TB
     rules --> db
     db --> dash
     rules --> alerter --> phone
-    db -.-> agg
 ```
 
 ## Data flow, in words
@@ -74,7 +68,21 @@ flowchart TB
   later is just another topic. No per-device special-casing.
 - **DB in the middle** = history and trends come for free; dashboard and ML read one store.
 - **Rules engine separate from dashboard** = alerts fire even when no screen is open.
-- **Local-first** = keeps working without internet; GCP is an optional add-on.
+- **Local-first** = fully self-contained; no cloud dependency, keeps working offline.
+
+## Data retention
+
+Tiered, capped at **2 years** — enough for year-over-year seasonal comparison without
+bloating the Pi's DB:
+
+| Tier | Resolution | Kept for |
+|------|-----------|----------|
+| Raw | per-sample (~5 s) | 60–90 days |
+| Mid | 1–5 min rollups | ~1 year |
+| Long | hourly / daily rollups | 2 years |
+
+Both InfluxDB and TimescaleDB implement this natively (retention policies +
+continuous aggregates / downsampling tasks).
 
 ## Planned repo layout (code comes after this design is approved)
 

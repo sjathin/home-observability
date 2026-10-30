@@ -23,8 +23,8 @@ air/climate monitor** read directly by the Raspberry Pi.
 
 Every device lands on one **MQTT bus**; a **writer** stores readings in a time-series
 DB; a **rules engine** turns data into alerts, the Attention list, and € savings; a
-**dashboard** and **phone alerts** read from there. All local on a Raspberry Pi 5;
-GCP is an optional later add-on. See [`docs/architecture.md`](docs/architecture.md).
+**dashboard** and **phone alerts** read from there. Everything runs locally on a
+Raspberry Pi 5 — no cloud. See [`docs/architecture.md`](docs/architecture.md).
 
 ## Status
 
