@@ -133,6 +133,9 @@ home-observability/
 
 ## Decided
 
+- **Backend language:** Python for all Pi services (official SCD41/SPS30 drivers +
+  pandas/scikit-learn for the Money/ML work; perf is a non-issue at this volume).
+  The `writer` may be ported to Rust later as an optional, self-contained exercise.
 - **Dashboards:** Grafana (Metrics + Money), provisioned as code, embedded in the app.
 - **App:** Flutter — one codebase for iOS + Android + web; Attention tab (custom) +
   Dashboards tab (embedded Grafana). PWA first; app stores optional.
