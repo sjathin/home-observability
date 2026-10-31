@@ -24,8 +24,8 @@ air/climate monitor** read directly by the Raspberry Pi.
 Every device lands on one **MQTT bus**; a **writer** stores readings in a time-series
 DB; a **rules engine** turns data into alerts, the Attention list, and € savings.
 **Grafana** renders the Metrics + Money dashboards, a **Flutter app** (iOS · Android · web)
-shows the Attention view and embeds those dashboards, and **push** (ntfy/Telegram) delivers
-alerts to both phones. Everything runs locally on a Raspberry Pi 5 — no cloud.
+shows the Attention view and embeds those dashboards, and **Web Push** delivers alerts to
+the app on both phones. Everything runs locally on a Raspberry Pi 5 — no cloud.
 See [`docs/architecture.md`](docs/architecture.md).
 
 ## Status

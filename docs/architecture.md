@@ -32,7 +32,7 @@ flowchart TB
     subgraph clients["Clients — one Flutter codebase"]
         app["Flutter app — iOS · Android · web/PWA<br/>Attention tab + embedded Grafana tab"]
     end
-    push["Push: ntfy / Telegram"]
+    push["Web Push — Apple / Google push service"]
 
     scd -->|I2C| reader
     sps -->|I2C| reader
@@ -71,8 +71,9 @@ flowchart TB
    - A small **`api`** serves the Attention list (and data) to the **Flutter app**, which
      has one codebase for iOS, Android, and web/PWA: an **Attention tab** (custom UI) and a
      **Dashboards tab** that embeds Grafana in a webview.
-   - The **alert dispatcher** pushes urgent (safety) and normal notifications via a push
-     service (**ntfy** or **Telegram**) to both phones — no app-store account needed.
+   - The **alert dispatcher** sends **Web Push** (VAPID, `pywebpush`) through Apple's and
+     Google's push services to the installed PWA on both phones. Delivery is an outbound
+     request from the Pi, so it works when the phone is away from home.
 
 ## Clients & distribution
 
@@ -80,12 +81,17 @@ flowchart TB
   browser view from the same source.
 - **Dashboards tab** = Grafana embedded via webview (don't rebuild charts).
   **Attention tab** = custom UI, the part worth building by hand.
-- **App stores are optional.** For a two-person household the simplest path is a
-  **PWA** (Flutter web, hosted on the Pi, "add to home screen") plus **ntfy/Telegram for
-  push** — their apps are already in both stores, so notifications work cross-platform
-  without an Apple Developer account. A native build/TestFlight is only worth it later if
-  you want native push and polish (Android sideloads freely; iOS needs the $99/yr Apple
-  Developer account for TestFlight or the store).
+- **App stores are optional.** The app ships as a **PWA** (Flutter web, hosted on the Pi,
+  "add to home screen") with **Web Push** for notifications. No Apple Developer account.
+- **Web Push requirements:**
+  - The PWA must be served over **HTTPS** (service workers and push need a secure origin).
+  - **iPhone:** iOS 16.4+, and push only works after "Add to Home Screen". Permission must be
+    requested from a tap in the app.
+  - A small JS **service worker** handles the `push` event and shows the notification.
+  - **VAPID key pair** generated once; the private key lives in `.env`, never in the repo.
+  - Subscriptions are stored on the Pi per device; drop them when the push service
+    returns 404/410. Safety alerts are sent with `Urgency: high`.
+- A native build (FCM + APNs) is only worth it if the app ever goes to the stores.
 
 ## Why this shape
 
@@ -139,9 +145,9 @@ home-observability/
 - **Dashboards:** Grafana (Metrics + Money), provisioned as code, embedded in the app.
 - **App:** Flutter — one codebase for iOS + Android + web; Attention tab (custom) +
   Dashboards tab (embedded Grafana). PWA first; app stores optional.
-- **Push:** ntfy or Telegram (final pick in the software phase) — no store account needed.
+- **Push:** Web Push (VAPID) to the PWA. No store account, no third-party messaging app.
+- **App ↔ Pi (app open):** REST for loading data + WebSocket for live updates, served by `api`.
 
 ## Open choices (decide during the software phase, not now)
 
 - Time-series DB: **InfluxDB** vs **TimescaleDB (Postgres)**.
-- Push service: **ntfy** (self-hosted, simple) vs **Telegram bot**.

@@ -22,7 +22,8 @@ build — start with `infra/docker-compose.yml` (MQTT broker + DB + Grafana) and
   — one Shelly API, WiFi, no hub.
 - **Dashboards:** Grafana (Metrics + Money), provisioned as code. **Client:** Flutter
   (iOS/Android/web) — Attention tab (custom) + Dashboards tab (embedded Grafana).
-  **Push:** ntfy/Telegram, PWA-first, app stores optional.
+  **Push:** Web Push (VAPID) to the PWA; needs HTTPS and, on iPhone, home-screen install.
+  App open = REST + WebSocket to `api`. PWA-first, app stores optional.
 - **Retention:** 2 years, tiered (raw 60–90 d, 1–5 min ~1 y, hourly/daily 2 y).
 
 ## North-star (everything ladders to these)
